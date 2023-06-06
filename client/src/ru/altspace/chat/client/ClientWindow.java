@@ -16,16 +16,19 @@ public class ClientWindow extends JFrame implements ActionListener, TCPConnectio
     private static final int WIDTH = 600;
     private static final int HEIGHT = 400;
 
+    private static ClientWindow window;
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                new ClientWindow();
+                window = new ClientWindow();
             }
         });
     }
 
     private final JTextArea log = new JTextArea();
+    JScrollPane scrollPane = new JScrollPane(log);
     private final JTextField fieldNickName = new JTextField("your name");
     private final JTextField fieldInput = new JTextField("your message");
 
@@ -42,7 +45,7 @@ public class ClientWindow extends JFrame implements ActionListener, TCPConnectio
         log.setLineWrap(true);
 
         fieldInput.addActionListener(this);
-        add(log, BorderLayout.CENTER);
+        add(scrollPane, BorderLayout.CENTER);
         add(fieldInput, BorderLayout.SOUTH);
         add(fieldNickName, BorderLayout.NORTH);
 
@@ -50,7 +53,7 @@ public class ClientWindow extends JFrame implements ActionListener, TCPConnectio
         try {
             connection = new TCPConnection(this, IP_ADRESS, PORT);
         } catch (IOException e) {
-            printMessage("Connection exception: " + e);
+            onException(connection, e);
         }
     }
 
@@ -81,6 +84,18 @@ public class ClientWindow extends JFrame implements ActionListener, TCPConnectio
     @Override
     public void onException(TCPConnection tcpConnection, Exception e) {
         printMessage("Connection exception: " + e);
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(3000);
+                    window.dispose();
+                } catch (InterruptedException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+        });
+        thread.start();
     }
 
     private synchronized void printMessage(String msg) {
